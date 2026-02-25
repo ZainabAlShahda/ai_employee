@@ -310,7 +310,25 @@ TOOL_SCHEMAS = [
 
 
 def call_skill(name: str, inputs: dict) -> dict:
-    """Dispatch a tool call to the registered skill function."""
+    """
+    Dispatch a tool call to the registered skill function.
+
+    In cloud mode, SEND_TOOLS are blocked at this layer as a safety net
+    (ralph_loop's draft-only gate should have caught them first).
+    """
+    try:
+        from platform.capabilities import DRAFT_ONLY_MODE, SEND_TOOLS  # noqa: PLC0415
+        if DRAFT_ONLY_MODE and name in SEND_TOOLS:
+            return {
+                "ok": False,
+                "error": (
+                    f"Skill '{name}' is blocked in cloud (draft-only) mode. "
+                    "Use request_approval to route this action to Local."
+                ),
+            }
+    except ImportError:
+        pass  # platform package not yet available — allow (Gold Tier compat)
+
     fn = SKILL_REGISTRY.get(name)
     if not fn:
         return {"ok": False, "error": f"Unknown skill: {name}"}

@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${ODOO_PASSWORD}
+      POSTGRES_DB: ${ODOO_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo:
+    image: odoo:17
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8069:8069"
+    environment:
+      HOST: db
+      USER: odoo
+      PASSWORD: "${ODOO_PASSWORD}"
+    volumes:
+      - odoo-data:/var/lib/odoo
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.agent
+    env_file: ../.env
+    environment:
+      AGENT_MODE: cloud
+      VAULT_PATH: /vault
+      VAULT_GIT_PATH: /vault
+    volumes:
+      - vault:/vault
+    depends_on:
+      - odoo
+    restart: unless-stopped
+    command: uv run python health/monitor.py
+
+volumes:
+  pgdata: {}
+  odoo-data: {}
+  vault: {}

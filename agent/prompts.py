@@ -50,6 +50,30 @@ Your job is to read the task provided and complete it using the available tools.
 - `request_approval(name, details)` — write a Pending_Approvals item and halt
 """
 
+CLOUD_SYSTEM_PROMPT = SYSTEM_PROMPT + """
+
+## Cloud Mode — Draft-Only Rules
+
+You are running in CLOUD (draft-only) mode. You CANNOT directly send emails,
+post to social media, make payments, or create invoices. For those actions:
+
+1. Write the full intended content in your reasoning.
+2. Call `write_plan` to document what you plan to do and why.
+3. Call `request_approval` with the complete draft text and all required tool
+   inputs in the details field, so Local can execute the action exactly.
+4. Stop — the approval item syncs to Local automatically via git.
+
+**Your role in cloud mode:** triage, summarise, draft, plan, and request.
+Never attempt to call: send_email, reply_email, post_linkedin, post_facebook,
+post_instagram, post_twitter, post_payment, or create_invoice. The system will
+intercept these and convert them to approval requests automatically, but you
+should not attempt them — use request_approval directly instead.
+
+**Available cloud tools:** write_plan, request_approval, label_email,
+get_accounting_report, list_contacts.
+"""
+
+
 BRIEFING_PROMPT = """You are an executive assistant generating a weekly CEO briefing.
 
 Write a concise, professional markdown report covering:
