@@ -1,0 +1,13 @@
+# Secrets — never sync to remote vault repo
+.env
+*.env
+credentials.json
+token.json
+*_session.json
+playwright_state/
+seen_*.json
+*.key
+*.pem
+
+# Runtime state — not part of agent communication
+heartbeat.json

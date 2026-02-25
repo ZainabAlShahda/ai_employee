@@ -1,0 +1,3 @@
+{$ODOO_DOMAIN} {
+    reverse_proxy odoo:8069
+}

@@ -10,6 +10,7 @@ Run standalone:
 
 from __future__ import annotations
 
+import fnmatch
 import subprocess
 import sys
 import time
@@ -19,6 +20,19 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from platform.config import agent_config  # noqa: E402
+
+# Patterns for files that must never be committed to the vault remote.
+# Matched against the basename of each staged path.
+BLOCKED_SYNC_PATTERNS: list[str] = [
+    ".env",
+    "*.env",
+    "credentials.json",
+    "token.json",
+    "*_session.json",
+    "seen_*.json",
+    "*.key",
+    "*.pem",
+]
 
 
 def _ts() -> str:
@@ -43,11 +57,33 @@ def pull_vault() -> None:
         print(f"[Sync] pull error: {result.stderr.strip()}", file=sys.stderr)
 
 
+def _check_staged_for_secrets() -> list[str]:
+    """Return a list of staged filenames that match a blocked pattern.
+
+    Called after ``git add -A`` and before committing so that secrets
+    accidentally dropped into the vault never reach the remote.
+    """
+    result = _git("diff", "--cached", "--name-only", check=False)
+    staged = result.stdout.strip().splitlines()
+    return [
+        f for f in staged
+        if any(fnmatch.fnmatch(Path(f).name, pat) for pat in BLOCKED_SYNC_PATTERNS)
+    ]
+
+
 def push_vault(message: str = "vault sync") -> None:
     """Stage all changes, commit if any, and push to remote."""
     if not agent_config.git_vault_remote:
         return
     _git("add", "-A")
+    blocked = _check_staged_for_secrets()
+    if blocked:
+        print(
+            f"[Sync] BLOCKED — refusing to sync secret files: {blocked}",
+            file=sys.stderr,
+        )
+        _git("reset", "HEAD", check=False)  # unstage everything
+        return
     diff = _git("diff", "--cached", "--quiet", check=False)
     if diff.returncode == 0:
         return  # nothing staged

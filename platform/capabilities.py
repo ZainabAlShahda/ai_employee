@@ -4,7 +4,26 @@ platform/capabilities.py — Per-mode allowed skills and draft-only flag.
 Cloud gets read/draft/plan tools only.
 Local gets all 13 skills (full access).
 
-Send/post tools that Cloud must intercept and route to Pending_Approvals:
+## Platinum Tier Security Rule (#4) — Secrets never leave Local
+
+Cloud runs in a constrained capability set by design:
+
+* ``SEND_TOOLS`` lists every tool that directly touches the outside world
+  (email send, social post, payment, invoice).  The ralph_loop intercepts
+  any Claude attempt to call these and routes them to ``request_approval``
+  instead, embedding the intended tool + inputs in a ``SEND_APPROVAL_*.md``
+  file under ``Pending_Approvals/``.
+
+* ``call_skill()`` in skills.py acts as a second, independent enforcement
+  layer: even if the loop logic were bypassed, calling a SEND_TOOL in cloud
+  mode raises a hard error rather than executing.
+
+* WhatsApp sessions, banking credentials, and payment tokens are never
+  loaded in the Cloud environment — only Local holds those secrets.  The
+  ``DRAFT_ONLY_MODE`` flag signals this constraint to any code that needs it.
+
+The combined effect is a belt-and-suspenders guarantee: Cloud can *describe*
+actions it would like to take, but Local must *approve and execute* them.
 """
 
 from __future__ import annotations

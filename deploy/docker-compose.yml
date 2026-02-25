@@ -19,8 +19,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "8069:8069"
+    # Port 8069 is NOT exposed to the host — Caddy proxies it internally
     environment:
       HOST: db
       USER: odoo
@@ -28,6 +27,40 @@ services:
     volumes:
       - odoo-data:/var/lib/odoo
     restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ODOO_DOMAIN: "${ODOO_DOMAIN}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - odoo
+    restart: unless-stopped
+
+  backup:
+    image: postgres:16-alpine
+    environment:
+      PGPASSWORD: "${ODOO_PASSWORD}"
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    # Daily pg_dump at midnight; keeps last 7 dumps then removes older ones
+    entrypoint: >
+      sh -c "while true; do
+        FILENAME=/backups/odoo_$$(date +%Y%m%d_%H%M%S).sql;
+        pg_dump -h db -U odoo -d ${ODOO_DB} > $$FILENAME && echo \"[Backup] $$FILENAME\";
+        find /backups -name '*.sql' -type f | sort | head -n -7 | xargs -r rm -f;
+        sleep 86400;
+      done"
 
   agent:
     build:
@@ -49,3 +82,5 @@ volumes:
   pgdata: {}
   odoo-data: {}
   vault: {}
+  caddy-data: {}
+  caddy-config: {}
