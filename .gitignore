@@ -8,3 +8,21 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Secrets & credentials
+.env
+credentials.json
+token.json
+
+# Playwright session state
+playwright_state/
+*_session.json
+seen_*.json
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

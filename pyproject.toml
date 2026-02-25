@@ -1,12 +1,20 @@
 [project]
 name = "ai-employee"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.2.0"
+description = "AI Employee — autonomous watcher + reasoning agent system"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "google-api-python-client>=2.190.0",
     "google-auth>=2.48.0",
+    "google-auth-httplib2>=0.3.0",
+    "google-auth-oauthlib>=1.2.4",
     "playwright>=1.58.0",
     "watchdog>=6.0.0",
+    "anthropic>=0.45.0",
+    "tweepy>=4.14.0",
+    "requests>=2.32.0",
+    "fastmcp>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "schedule>=1.2.0",
 ]
