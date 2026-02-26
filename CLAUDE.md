@@ -20,7 +20,7 @@ This is an **AI Employee** system (Platinum Tier) — two cooperating agents (Cl
 
 ```
 E:/ai_employee/
-├── platform/                   Agent identity + capability management
+├── agent_platform/             Agent identity + capability management
 │   ├── config.py               AgentConfig singleton — reads AGENT_MODE from .env
 │   └── capabilities.py         Per-mode allowed skills list + draft-only flag
 │
