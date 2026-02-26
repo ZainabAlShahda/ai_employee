@@ -10,7 +10,7 @@ def watch_linkedin(vault_path):
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
         page.goto("https://www.linkedin.com/login")
-        print("🔑 Please log in to LinkedIn manually...")
+        print("[LinkedIn] Please log in manually...")
 
         # Wait for login
         page.wait_for_load_state("networkidle")
@@ -33,7 +33,7 @@ source: LinkedIn
 
 {text}
 """)
-                    print(f"💼 New LinkedIn notification: {text[:60]}...")
+                    print(f"[LinkedIn] New notification: {text[:60]}...")
 
             time.sleep(60)  # check every minute
 
