@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from platform.config import agent_config  # noqa: E402
+from agent_platform.config import agent_config  # noqa: E402
 
 
 def _ts() -> str:

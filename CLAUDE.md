@@ -20,7 +20,7 @@ This is an **AI Employee** system (Platinum Tier) — two cooperating agents (Cl
 
 ```
 E:/ai_employee/
-├── platform/                   Agent identity + capability management
+├── agent_platform/             Agent identity + capability management
 │   ├── config.py               AgentConfig singleton — reads AGENT_MODE from .env
 │   └── capabilities.py         Per-mode allowed skills list + draft-only flag
 │
@@ -33,10 +33,12 @@ E:/ai_employee/
 │   └── heartbeat.py            Writes Logs/heartbeat.json every HEARTBEAT_INTERVAL s
 │
 ├── deploy/                     Cloud deployment
-│   ├── docker-compose.yml      Odoo 17 + PostgreSQL 16 + agent container
+│   ├── docker-compose.yml      Odoo 17 + PostgreSQL 16 + Caddy + backup + agent
+│   ├── Caddyfile               Caddy reverse proxy + auto-TLS config
 │   ├── Dockerfile.agent        Python 3.13-slim image with uv
 │   ├── supervisord.conf        Non-Docker fallback process manager
-│   └── setup_cloud.sh          One-shot cloud VM bootstrap script
+│   ├── setup_cloud.sh          One-shot cloud VM bootstrap script
+│   └── backups/                pg_dump output directory (.gitkeep, *.sql excluded)
 │
 ├── watchers/                   Social media watchers (Facebook, Instagram, Twitter)
 ├── mcp_servers/                MCP servers (gmail_mcp, odoo_mcp, social_mcp)
@@ -141,6 +143,20 @@ Cloud embeds tool metadata in approval files:
 ```
 Local's `_execute_send_approval()` parses these and calls `call_skill()` directly.
 
+### Security Rules (Platinum #4 — Secrets Never Sync)
+
+Three independent layers prevent secrets from reaching the vault remote:
+
+1. **`AI_Employee_Vault/.gitignore`** — vault-level ignore list. Even if the vault is managed as a
+   standalone git repo, blocked patterns (`.env`, `credentials.json`, `*.key`, `*.pem`, etc.) are
+   never staged.
+2. **`sync/vault_sync.py` pre-push scan** — `_check_staged_for_secrets()` inspects staged files
+   after `git add -A` and before committing. Aborts with `git reset HEAD` if any blocked file is
+   staged.
+3. **`platform/capabilities.py` capability gate** — Cloud never loads WhatsApp sessions, banking
+   credentials, or payment tokens. `SEND_TOOLS` + `DRAFT_ONLY_MODE` enforce this in code;
+   `call_skill()` raises a hard error if a SEND_TOOL is invoked in cloud mode.
+
 ### Metadata Format
 
 All items dropped into the vault use YAML frontmatter:
@@ -161,6 +177,7 @@ All secrets live in `.env` (gitignored). Copy `.env.example` → `.env` and fill
 - **Twitter / X**: Tweepy OAuth1 — set all 5 `TWITTER_*` env vars.
 - **Odoo**: JSON-RPC — set `ODOO_URL`, `ODOO_DB`, `ODOO_USERNAME`, `ODOO_PASSWORD`.
 - **Anthropic**: Set `ANTHROPIC_API_KEY` for the Ralph loop and CEO briefing.
+- **Caddy / HTTPS**: Set `ODOO_DOMAIN=odoo.yourdomain.com` — Caddy uses this for automatic Let's Encrypt certificate provisioning.
 - `credentials.json` and `.env` must never be committed.
 
 ## Odoo Setup
@@ -227,6 +244,15 @@ supervisord -c deploy/supervisord.conf
 
 This project is structured around four capability tiers:
 
+### Bronze Tier — Basic Automation (0–10 hrs)
+
+The implicit foundation that all higher tiers build on:
+- Single watcher script monitoring one input channel (e.g., a local folder or inbox)
+- Write incoming events as Markdown files to a local vault folder
+- No Claude reasoning loop — purely mechanical routing
+- No external actions (read-only / observe mode)
+- Manual review of vault files by the operator
+
 ### Silver Tier — Functional Assistant (20–30 hrs)
 - Two or more Watcher scripts (Gmail + WhatsApp + LinkedIn) ✅
 - Automatically post on LinkedIn about business to generate sales
@@ -246,6 +272,7 @@ This project is structured around four capability tiers:
 - Comprehensive audit logging
 - Ralph Wiggum loop for autonomous multi-step task completion
 - All AI functionality implemented as Agent Skills
+- Lessons learned documentation (`docs/lessons_learned.md`) ✅
 
 ### Platinum Tier — Always-On Cloud + Local Executive (60+ hrs) ✅
 - Run the AI Employee on Cloud 24/7 (always-on watchers + orchestrator + health monitoring) ✅
@@ -257,6 +284,13 @@ This project is structured around four capability tiers:
   - Claim-by-move rule: first agent to move an item from `Needs_Action/` to `In_Progress/<agent_id>/` owns it
   - `Dashboard.md` is single-writer (Local); Cloud writes to `Updates/` and Local merges via `dashboard_merger.py`
   - Vault sync via Git (`sync/vault_sync.py`) — markdown/state only, secrets never sync
+- **Secrets-never-sync (security rule):** ✅
+  - `AI_Employee_Vault/.gitignore` — blocks `.env`, `credentials.json`, `token.json`, `*.key`, `*.pem`, etc. at vault repo level
+  - `sync/vault_sync.py` pre-push scan — `_check_staged_for_secrets()` aborts and unstages if any blocked file would be committed
+  - `platform/capabilities.py` — Cloud never holds WhatsApp sessions, banking credentials, or payment tokens; enforced by `SEND_TOOLS` + `DRAFT_ONLY_MODE`
+- **Odoo HTTPS + automated backups:** ✅
+  - Caddy reverse proxy (`deploy/Caddyfile`) handles automatic Let's Encrypt TLS — set `ODOO_DOMAIN` in `.env`
+  - pg_dump backup sidecar in `docker-compose.yml` — daily dumps to `deploy/backups/`, retains last 7
 - Deploy Odoo Community on Cloud VM via Docker Compose (`deploy/`) ✅
 - Process watchdog (`health/monitor.py`) restarts any dead subprocess automatically ✅
 - Heartbeat (`health/heartbeat.py`) writes `Logs/heartbeat.json` for liveness monitoring ✅

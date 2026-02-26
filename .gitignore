@@ -26,3 +26,9 @@ seen_*.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Odoo backup dumps — contents excluded, directory tracked via .gitkeep
+deploy/backups/*.sql
+
+# Claude Code local session data
+.claude/

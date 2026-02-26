@@ -27,7 +27,7 @@ from dotenv import load_dotenv
 sys.path.insert(0, str(Path(__file__).parent.parent))
 load_dotenv()
 
-from platform.config import agent_config  # noqa: E402
+from agent_platform.config import agent_config  # noqa: E402
 
 VAULT_PATH = agent_config.vault_path
 NEEDS_ACTION = VAULT_PATH / "Needs_Action"

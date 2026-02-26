@@ -317,7 +317,7 @@ def call_skill(name: str, inputs: dict) -> dict:
     (ralph_loop's draft-only gate should have caught them first).
     """
     try:
-        from platform.capabilities import DRAFT_ONLY_MODE, SEND_TOOLS  # noqa: PLC0415
+        from agent_platform.capabilities import DRAFT_ONLY_MODE, SEND_TOOLS  # noqa: PLC0415
         if DRAFT_ONLY_MODE and name in SEND_TOOLS:
             return {
                 "ok": False,

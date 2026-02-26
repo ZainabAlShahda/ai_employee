@@ -28,8 +28,8 @@ from dotenv import load_dotenv
 sys.path.insert(0, str(Path(__file__).parent.parent))
 load_dotenv()
 
-from platform.config import agent_config  # noqa: E402
-from platform.capabilities import (  # noqa: E402
+from agent_platform.config import agent_config  # noqa: E402
+from agent_platform.capabilities import (  # noqa: E402
     DRAFT_ONLY_MODE,
     SEND_TOOLS,
     get_tool_schemas,

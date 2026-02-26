@@ -56,7 +56,7 @@ from: {sender}
 
 New Gmail message detected.
 """)
-            print(f"📧 New Gmail message: {subject} from {sender}")
+            print(f"[Gmail] New message: {subject} from {sender}")
             seen_ids.add(msg_id)
 
         time.sleep(30)  # check every 30 seconds
