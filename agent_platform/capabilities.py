@@ -28,7 +28,7 @@ actions it would like to take, but Local must *approve and execute* them.
 
 from __future__ import annotations
 
-from platform.config import agent_config
+from agent_platform.config import agent_config
 
 # Tools that directly act on the outside world — Cloud must NOT call these;
 # it must route them through request_approval instead.

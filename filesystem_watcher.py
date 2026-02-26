@@ -15,20 +15,20 @@ class DropFolderHandler(FileSystemEventHandler):
             return
         source = Path(event.src_path)
         dest = self.needs_action / f'FILE_{source.name}'
-        print(f"📂 Detected new file: {source.name}, waiting until it is free...")
+        print(f"[FS] Detected new file: {source.name}, waiting until it is free...")
 
         # Retry until the file is not locked
         for attempt in range(10):
             try:
                 shutil.copy2(source, dest)
                 self.create_metadata(source, dest)
-                print(f"✅ Copied {source.name} → Needs_Action")
+                print(f"[FS] Copied {source.name} -> Needs_Action")
                 break
             except PermissionError:
-                print(f"⚠️ File {source.name} is locked, retrying ({attempt+1}/10)...")
+                print(f"[FS] File {source.name} is locked, retrying ({attempt+1}/10)...")
                 time.sleep(1)
         else:
-            print(f"❌ Failed to copy {source.name} after 10 attempts.")
+            print(f"[FS] Failed to copy {source.name} after 10 attempts.")
 
     def create_metadata(self, source: Path, dest: Path):
         meta_path = dest.with_suffix('.md')
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     observer = Observer()
     observer.schedule(event_handler, drop_folder, recursive=False)
     observer.start()
-    print(f"👀 Watching folder: {drop_folder}")
+    print(f"[FS] Watching folder: {drop_folder}")
     try:
         while True:
             time.sleep(1)
