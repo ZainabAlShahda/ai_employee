@@ -10,7 +10,7 @@ def watch_whatsapp(vault_path):
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
         page.goto("https://web.whatsapp.com")
-        print("📱 Scan QR code to log in...")
+        print("[WhatsApp] Scan QR code to log in...")
 
         while True:
             # Example: scrape unread chats
